@@ -52,7 +52,7 @@ async fn check_status(client: &Client, request: &HealthRequest) -> Result<(), re
     let status = response.status().is_success();
     println!("{status}");
     if status {
-        validate(&response.text().await?, &request.validation);
+        validate(&response.text().await?, &request.validation, &request.criteria,&request.condition);
     }
     Ok(())
 }

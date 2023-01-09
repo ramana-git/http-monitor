@@ -10,19 +10,14 @@ pub enum VType {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct Validation{
-    pub vtype: VType,
-    pub condition: String,
-    pub value: String,
-}
-
-#[derive(Deserialize, Debug)]
 pub struct HealthRequest {
     pub url: String,
     pub headers: HashMap<String, String>,
     pub interval: u64, //seconds default 120 min
     pub timeout: u64,  //seconds default 5 seconds
-    pub validation: Validation,
+    pub validation: VType,
+    pub criteria: String,
+    pub condition: String,
 }
 impl Default for HealthRequest {
     fn default() -> Self {
@@ -31,11 +26,9 @@ impl Default for HealthRequest {
             headers: HashMap::new(),
             interval: 120,
             timeout: 5,
-            validation: Validation{
-                vtype: VType::None,
-                condition: String::new(),
-                value: String::new()
-            }
+            validation:VType::None,
+            criteria: String::new(),
+            condition: String::new(),
         }
     }
 }

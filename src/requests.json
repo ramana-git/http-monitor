@@ -5,24 +5,20 @@
             "Accept": "*/*"
         },
         "interval": 10,
-        "timeout": 10,        
-        "validation": {
-            "vtype": "None",
-            "condition": "",
-            "value": ""
-        }
+        "timeout": 10,
+        "validation": "None",
+        "criteria": "",
+        "condition": ""
     },
     {
-        "url": "https://httpbin.org/ip",
+        "url": "https://httpbin.org/get",
         "headers":{
             "Accept": "application/json"
         },
         "interval": 20,
         "timeout": 10,
-        "validation": {
-            "vtype": "Json",
-            "condition": "abcd.xyz",
-            "value": "10"
-        }
+        "validation": "None",
+        "criteria": "abcd.xyz",
+        "condition": "value"
     }
 ]

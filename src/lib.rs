@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use request::{Validation, VType};
+use request::VType;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 pub mod request;
 
@@ -26,27 +26,27 @@ pub fn compare_none(response: &String) -> bool {
     true
 }
 
-pub fn compare_text(_response: &String, _text: &String) -> bool {
+pub fn contains_text(_response: &String, _text: &String) -> bool {
     //TODO
     false
 }
 
-pub fn compare_json(_response: &String, _condition: &String, _text: &String) -> bool {
+pub fn compare_json(_response: &String, _criteria: &String, _condition: &String) -> bool {
     //TODO
     false
 }
 
-pub fn compare_regex(_response: &String, _condition: &String, _text: &String) -> bool {
+pub fn compare_regex(_response: &String, _criteria: &String, _condition: &String) -> bool {
     //TODO
     false
 }
 
-pub fn validate(response: &String, validation: &Validation) -> bool {
-    let valid = match validation.vtype {
-        VType::Text => compare_text(response, &validation.value),
-        VType::Json => compare_json(response, &validation.condition, &validation.value),
-        VType::RegEx => compare_regex(response,&validation.condition, &validation.value),
-        _ => compare_none(response),
+pub fn validate(response: &String, validation: &VType, criteria: &String, condition: &String) -> bool {
+    let valid = match validation {
+        VType::Text => contains_text(&response, &condition),
+        VType::Json => compare_json(&response, &criteria,&condition),
+        VType::RegEx => compare_regex(&response, &criteria,&condition),
+        _ => compare_none(&response),
     };
     valid
 }
