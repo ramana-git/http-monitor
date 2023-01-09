@@ -34,10 +34,10 @@ async fn main() -> Result<(), reqwest::Error> {
 async fn run_client(request: &HealthRequest) {
     let client = reqwest::Client::builder()
         .default_headers(default_headers())
-        .timeout(Duration::from_secs(request.timeout))
+        .timeout(Duration::from_secs(request.timeout.try_into().unwrap()))
         .build()
         .unwrap();
-    let duration = Duration::from_secs(request.interval);
+    let duration = Duration::from_secs(request.interval.try_into().unwrap());
     for i in 1.. {
         let status = check_status(&client, &request).await;
         println!("time# {i} - {:#?}", status);

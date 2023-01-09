@@ -1,5 +1,6 @@
 use serde::Deserialize;
 use std::collections::HashMap;
+use uuid::Uuid;
 
 #[derive(Deserialize, Debug)]
 pub enum VType {
@@ -11,10 +12,11 @@ pub enum VType {
 
 #[derive(Deserialize, Debug)]
 pub struct HealthRequest {
+    pub uuid: Uuid,
     pub url: String,
     pub headers: HashMap<String, String>,
-    pub interval: u64, //seconds default 120 min
-    pub timeout: u64,  //seconds default 5 seconds
+    pub interval: i64, //seconds default 120 min
+    pub timeout: i64,  //seconds default 5 seconds
     pub validation: VType,
     pub criteria: String,
     pub condition: String,
@@ -22,6 +24,7 @@ pub struct HealthRequest {
 impl Default for HealthRequest {
     fn default() -> Self {
         HealthRequest {
+            uuid: Uuid::nil(),
             url: String::new(),
             headers: HashMap::new(),
             interval: 120,

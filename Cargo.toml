@@ -2,8 +2,12 @@
 name = "http-monitor"
 version = "0.1.0"
 edition = "2021"
+default-run = "test"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "test"
+path = "src/test.rs"
 
 [profile.release]
 strip = true
@@ -13,7 +17,13 @@ codegen-units = 1
 panic = "abort"
 
 [dependencies]
+bb8 = "0.8.0"
+bb8-tiberius = "0.13.0"
 reqwest = { version = "0.11.13", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.91"
+tiberius = { version = "0.11.4", default-features = false, features = ["chrono"] }
 tokio = { version = "1.24.0", features = ["macros", "rt-multi-thread"] }
+tracing = "0.1.37"
+tracing-subscriber = "0.3.16"
+uuid = { version = "1.2.2", features = ["serde"] }

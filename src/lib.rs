@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use request::VType;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+
 pub mod request;
+pub mod trackers;
 
 pub fn headers(map: &HashMap<String, String>) -> HeaderMap {
     let mut headers = HeaderMap::new();
