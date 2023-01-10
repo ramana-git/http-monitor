@@ -5,13 +5,18 @@ use uuid::Uuid;
 
 use crate::request::{HealthRequest, VType};
 
-pub async fn connect(conn_str: &str, max_size: u8) -> Result<Pool<ConnectionManager>, Box<dyn Error>> {
+pub async fn connect(
+    conn_str: &str,
+    max_size: u8,
+) -> Result<Pool<ConnectionManager>, Box<dyn Error>> {
     let mgr = ConnectionManager::build(conn_str)?;
     let pool = Pool::builder().max_size(max_size.into()).build(mgr).await?;
     Ok(pool)
 }
 
-pub async fn requests(pool: &Pool<ConnectionManager>) -> Result<Vec<HealthRequest>, Box<dyn Error>> {
+pub async fn requests(
+    pool: &Pool<ConnectionManager>,
+) -> Result<Vec<HealthRequest>, Box<dyn Error>> {
     let mut conn = pool.get().await?;
     let result: Vec<HealthRequest> = conn
         .simple_query("select * from HealthTrackers where active=1")
@@ -20,7 +25,7 @@ pub async fn requests(pool: &Pool<ConnectionManager>) -> Result<Vec<HealthReques
         .await?
         .into_iter()
         .map(|row| -> HealthRequest {
-            let headers=row.get::<&str, usize>(2).unwrap();
+            let headers = row.get::<&str, usize>(2).unwrap();
             HealthRequest {
                 uuid: row.get::<Uuid, usize>(0).unwrap(),
                 url: row.get::<&str, usize>(1).unwrap().to_owned(),
@@ -41,14 +46,22 @@ pub async fn requests(pool: &Pool<ConnectionManager>) -> Result<Vec<HealthReques
     Ok(result)
 }
 
-pub async fn update_health(pool: &Pool<ConnectionManager>, time: i64, uuid: &Uuid, status: bool, code: i16, message: &String) {
-    let first8000= &message[0..8000];
+pub async fn update_health(
+    pool: &Pool<ConnectionManager>,
+    time: i64,
+    uuid: &Uuid,
+    status: bool,
+    code: i16,
+    message: &String,
+) {
+    let first8000 = &message[0..8000];
     if let Ok(mut conn) = pool.get().await {
         let result = conn
             .execute(
                 "insert into HealthHistory values (@P1), (@P2), (@P3), (@P4), (@P5)",
                 &[uuid, &time, &status, &code, &first8000],
-            ).await;
+            )
+            .await;
         println!("Updated HealthHistory: {:?}", result);
     } else {
         println!("Unable to connect to database");

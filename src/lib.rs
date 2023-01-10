@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use request::VType;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use std::collections::HashMap;
 
 pub mod request;
 pub mod trackers;
@@ -43,11 +43,16 @@ pub fn compare_regex(_response: &String, _criteria: &String, _condition: &String
     false
 }
 
-pub fn validate(response: &String, validation: &VType, criteria: &String, condition: &String) -> bool {
+pub fn validate(
+    response: &String,
+    validation: &VType,
+    criteria: &String,
+    condition: &String,
+) -> bool {
     let valid = match validation {
         VType::Text => contains_text(&response, &condition),
-        VType::Json => compare_json(&response, &criteria,&condition),
-        VType::RegEx => compare_regex(&response, &criteria,&condition),
+        VType::Json => compare_json(&response, &criteria, &condition),
+        VType::RegEx => compare_regex(&response, &criteria, &condition),
         _ => compare_none(&response),
     };
     valid

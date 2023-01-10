@@ -29,7 +29,7 @@ impl Default for HealthRequest {
             headers: HashMap::new(),
             interval: 120,
             timeout: 5,
-            validation:VType::None,
+            validation: VType::None,
             criteria: String::new(),
             condition: String::new(),
         }

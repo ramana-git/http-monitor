@@ -1,6 +1,11 @@
-use std::{env, fs, error::Error};
+use std::{env, error::Error, fs};
 
-use http_monitor::{default_headers, headers, request::HealthRequest, validate, trackers::{connect, requests}};
+use http_monitor::{
+    default_headers, headers,
+    request::HealthRequest,
+    trackers::{connect, requests},
+    validate,
+};
 use reqwest::Client;
 use tokio::time::{sleep, Duration};
 
@@ -8,47 +13,49 @@ use tokio::time::{sleep, Duration};
 async fn main() -> Result<(), Box<dyn Error>> {
     let server = match env::var("SERVER") {
         Ok(value) => value,
-        Err(_e) => "localhost".to_owned()
+        Err(_e) => "localhost".to_owned(),
     };
     let port = match env::var("PORT") {
         Ok(value) => value,
-        Err(_e) => "1433".to_owned()
+        Err(_e) => "1433".to_owned(),
     };
     let database = match env::var("DATABASE") {
         Ok(value) => value,
-        Err(_e) => "master".to_owned()
+        Err(_e) => "master".to_owned(),
     };
     let user = match env::var("DB_USER") {
         Ok(value) => value,
-        Err(_e) => "sa".to_owned()
+        Err(_e) => "sa".to_owned(),
     };
     let password = match env::var("DB_PASSWORD") {
         Ok(value) => value,
-        Err(_e) => "YourStrong!Passw0rd".to_owned()
+        Err(_e) => "YourStrong!Passw0rd".to_owned(),
     };
 
-    let conn_str=format!("Server={server};Port={port};Database={database};User Id={user};Password={password};");
+    let conn_str = format!(
+        "Server={server};Port={port};Database={database};User Id={user};Password={password};"
+    );
     println!("Connection string: {}", conn_str);
     read_from_db(&conn_str).await
 }
 
-async fn read_from_db(conn_str:&str) -> Result<(), Box<dyn Error>> {
+async fn read_from_db(conn_str: &str) -> Result<(), Box<dyn Error>> {
     let max_pool_size = match env::var("DB_MAX_POOL_SIZE") {
         Ok(value) => value.parse::<u8>().unwrap(),
-        Err(_e) => 3
+        Err(_e) => 3,
     };
-    let pool=connect(conn_str, max_pool_size).await?;
+    let pool = connect(conn_str, max_pool_size).await?;
     let trackers = requests(&pool).await?;
     println!("{:#?}", trackers);
     monitor(trackers).await;
-    Ok(())    
+    Ok(())
 }
 
 async fn _read_from_file() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
-    let file = match args.len(){
-        1=>"src/requests.json",
-        _=>args[1].as_str()
+    let file = match args.len() {
+        1 => "src/requests.json",
+        _ => args[1].as_str(),
     };
     println!("File: {file}");
     let contents = fs::read_to_string(file).unwrap();
