@@ -20,20 +20,21 @@ pub async fn requests(pool: &Pool<ConnectionManager>) -> Result<Vec<HealthReques
         .await?
         .into_iter()
         .map(|row| -> HealthRequest {
+            let headers=row.get::<&str, usize>(2).unwrap();
             HealthRequest {
                 uuid: row.get::<Uuid, usize>(0).unwrap(),
-                url: row.get::<&str, usize>(1).unwrap().to_string(),
-                headers: serde_json::from_str(row.get::<&str, usize>(1).unwrap()).unwrap(),
-                interval: row.get::<i64, usize>(3).unwrap(),
-                timeout: row.get::<i64, usize>(4).unwrap(),
+                url: row.get::<&str, usize>(1).unwrap().to_owned(),
+                headers: serde_json::from_str(headers).unwrap_or_default(),
+                interval: row.get::<i32, usize>(3).unwrap_or_default(),
+                timeout: row.get::<i32, usize>(4).unwrap_or_default(),
                 validation: match row.get::<&str, usize>(5) {
                     Some("Json") => VType::Json,
                     Some("RegEx") => VType::RegEx,
                     Some("Text") => VType::Text,
                     _ => VType::Text,
                 },
-                criteria: row.get::<&str, usize>(6).unwrap().to_string(),
-                condition: row.get::<&str, usize>(7).unwrap().to_string(),
+                criteria: row.get::<&str, usize>(6).unwrap_or_default().to_owned(),
+                condition: row.get::<&str, usize>(7).unwrap_or_default().to_owned(),
             }
         })
         .collect();

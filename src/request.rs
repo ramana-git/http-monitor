@@ -15,8 +15,8 @@ pub struct HealthRequest {
     pub uuid: Uuid,
     pub url: String,
     pub headers: HashMap<String, String>,
-    pub interval: i64, //seconds default 120 min
-    pub timeout: i64,  //seconds default 5 seconds
+    pub interval: i32, //seconds default 120 min
+    pub timeout: i32,  //seconds default 5 seconds
     pub validation: VType,
     pub criteria: String,
     pub condition: String,

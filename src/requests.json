@@ -1,5 +1,6 @@
 [
     {
+        "uuid": "c05e10ed-7fd5-49b6-853f-2dfdcf62d09c",
         "url": "https://httpbin.org/ip",
         "headers":{
             "Accept": "*/*"
@@ -11,6 +12,7 @@
         "condition": ""
     },
     {
+        "uuid": "f7155d5c-fd47-4d7d-bb82-e3dc3f68ce03",
         "url": "https://httpbin.org/get",
         "headers":{
             "Accept": "application/json"

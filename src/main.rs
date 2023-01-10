@@ -1,25 +1,68 @@
-use std::{fs, env};
+use std::{env, fs, error::Error};
 
-use http_monitor::{default_headers, headers, request::HealthRequest, validate};
+use http_monitor::{default_headers, headers, request::HealthRequest, validate, trackers::{connect, requests}};
 use reqwest::Client;
 use tokio::time::{sleep, Duration};
 
 #[tokio::main]
-async fn main() -> Result<(), reqwest::Error> {
+async fn main() -> Result<(), Box<dyn Error>> {
+    let server = match env::var("SERVER") {
+        Ok(value) => value,
+        Err(_e) => "localhost".to_owned()
+    };
+    let port = match env::var("PORT") {
+        Ok(value) => value,
+        Err(_e) => "1433".to_owned()
+    };
+    let database = match env::var("DATABASE") {
+        Ok(value) => value,
+        Err(_e) => "master".to_owned()
+    };
+    let user = match env::var("DB_USER") {
+        Ok(value) => value,
+        Err(_e) => "sa".to_owned()
+    };
+    let password = match env::var("DB_PASSWORD") {
+        Ok(value) => value,
+        Err(_e) => "YourStrong!Passw0rd".to_owned()
+    };
+
+    let conn_str=format!("Server={server};Port={port};Database={database};User Id={user};Password={password};");
+    println!("Connection string: {}", conn_str);
+    read_from_db(&conn_str).await
+}
+
+async fn read_from_db(conn_str:&str) -> Result<(), Box<dyn Error>> {
+    let max_pool_size = match env::var("DB_MAX_POOL_SIZE") {
+        Ok(value) => value.parse::<u8>().unwrap(),
+        Err(_e) => 3
+    };
+    let pool=connect(conn_str, max_pool_size).await?;
+    let trackers = requests(&pool).await?;
+    println!("{:#?}", trackers);
+    monitor(trackers).await;
+    Ok(())    
+}
+
+async fn _read_from_file() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
-    let file = if args.len() > 1 {
-        args[1].as_str()
-    } else {
-        "src/requests.json"
+    let file = match args.len(){
+        1=>"src/requests.json",
+        _=>args[1].as_str()
     };
     println!("File: {file}");
     let contents = fs::read_to_string(file).unwrap();
-    let requests: Vec<HealthRequest> = serde_json::from_str(&contents).unwrap();
-    println!("{:#?}", requests);
+    let trackers: Vec<HealthRequest> = serde_json::from_str(&contents).unwrap();
+    println!("{:#?}", trackers);
 
-    let mut handles = Vec::with_capacity(requests.len());
-    for request in requests {
-        let handle=tokio::spawn(async move {
+    monitor(trackers).await;
+    Ok(())
+}
+
+async fn monitor(trackers: Vec<HealthRequest>) {
+    let mut handles = Vec::with_capacity(trackers.len());
+    for request in trackers {
+        let handle = tokio::spawn(async move {
             run_client(&request).await;
         });
         handles.push(handle);
@@ -28,7 +71,6 @@ async fn main() -> Result<(), reqwest::Error> {
     for handle in handles {
         handle.await.unwrap();
     }
-    Ok(())
 }
 
 async fn run_client(request: &HealthRequest) {
@@ -52,7 +94,12 @@ async fn check_status(client: &Client, request: &HealthRequest) -> Result<(), re
     let status = response.status().is_success();
     println!("{status}");
     if status {
-        validate(&response.text().await?, &request.validation, &request.criteria,&request.condition);
+        validate(
+            &response.text().await?,
+            &request.validation,
+            &request.criteria,
+            &request.condition,
+        );
     }
     Ok(())
 }
