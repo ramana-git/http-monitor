@@ -23,8 +23,8 @@ pub fn default_headers() -> HeaderMap {
     headers(&default_headers)
 }
 
-pub fn compare_none(response: &String) -> bool {
-    println!("{response}");
+pub fn compare_none(_response: &String) -> bool {
+    //println!("{response}");
     true
 }
 
@@ -49,11 +49,10 @@ pub fn validate(
     criteria: &String,
     condition: &String,
 ) -> bool {
-    let valid = match validation {
+    match validation {
         VType::Text => contains_text(&response, &condition),
         VType::Json => compare_json(&response, &criteria, &condition),
         VType::RegEx => compare_regex(&response, &criteria, &condition),
         _ => compare_none(&response),
-    };
-    valid
+    }
 }

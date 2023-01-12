@@ -1,5 +1,6 @@
 use bb8::Pool;
 use bb8_tiberius::ConnectionManager;
+use tiberius::time::chrono::NaiveDateTime;
 use std::error::Error;
 use uuid::Uuid;
 
@@ -14,10 +15,10 @@ pub async fn connect(
     Ok(pool)
 }
 
-pub async fn requests(
-    pool: &Pool<ConnectionManager>,
-) -> Result<Vec<HealthRequest>, Box<dyn Error>> {
-    let mut conn = pool.get().await?;
+pub async fn requests(pool: &Pool<ConnectionManager>) -> Result<Vec<HealthRequest>, Box<dyn Error>> {
+    println!("Getting connection...from pool");
+    let mut conn = pool.get().await.unwrap();
+    println!("Got connection");
     let result: Vec<HealthRequest> = conn
         .simple_query("select * from HealthTrackers where active=1")
         .await?
@@ -36,7 +37,7 @@ pub async fn requests(
                     Some("Json") => VType::Json,
                     Some("RegEx") => VType::RegEx,
                     Some("Text") => VType::Text,
-                    _ => VType::Text,
+                    _ => VType::None,
                 },
                 criteria: row.get::<&str, usize>(6).unwrap_or_default().to_owned(),
                 condition: row.get::<&str, usize>(7).unwrap_or_default().to_owned(),
@@ -50,16 +51,20 @@ pub async fn update_health(
     pool: &Pool<ConnectionManager>,
     time: i64,
     uuid: &Uuid,
-    status: bool,
+    health: bool,
     code: i16,
     message: &String,
 ) {
-    let first8000 = &message[0..8000];
+    let time=NaiveDateTime::from_timestamp_millis(time).unwrap();
+    let mut first8000=message.as_str();
+    if message.len()>8000{
+        first8000=&message[0..8000];
+    }
     if let Ok(mut conn) = pool.get().await {
         let result = conn
             .execute(
-                "insert into HealthHistory values (@P1), (@P2), (@P3), (@P4), (@P5)",
-                &[uuid, &time, &status, &code, &first8000],
+                "insert into HealthHistory values ((@P1), (@P2), (@P3), (@P4), (@P5))",
+                &[uuid, &time, &health, &code, &first8000],
             )
             .await;
         println!("Updated HealthHistory: {:?}", result);
