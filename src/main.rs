@@ -24,6 +24,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
         Ok(value) => value,
         Err(_e) => "master".to_owned(),
     };
+    let schema = match env::var("DB_SCHEMA") {
+        Ok(value) => value,
+        Err(_e) => "dbo".to_owned(),
+    };
     let user = match env::var("DB_USER") {
         Ok(value) => value,
         Err(_e) => "sa".to_owned(),
@@ -42,18 +46,19 @@ async fn main() -> Result<(), Box<dyn Error>> {
     println!("Connection string: {}", conn_str);
 
     let pool = connect(&conn_str, max_pool_size).await.unwrap();
-    monitor(&pool).await;
+    monitor(&pool, &schema).await;
     Ok(())
 }
 
-async fn monitor(pool: &Pool<ConnectionManager>) {
-    let trackers = requests(&pool).await.unwrap();
+async fn monitor(pool: &Pool<ConnectionManager>, schema: &str) {
+    let trackers = requests(&pool, &schema).await.unwrap();
     println!("{:#?}", trackers);
     let mut handles = Vec::with_capacity(trackers.len());
     for request in trackers {
         let pool = pool.clone();
+        let schema = schema.to_owned().clone();
         let handle = tokio::spawn(async move {
-            run_client(&pool, &request).await;
+            run_client(&pool, &schema, &request).await;
         });
         handles.push(handle);
     }
@@ -63,7 +68,7 @@ async fn monitor(pool: &Pool<ConnectionManager>) {
     }
 }
 
-async fn run_client(pool: &Pool<ConnectionManager>, request: &HealthRequest) {
+async fn run_client(pool: &Pool<ConnectionManager>, schema: &str, request: &HealthRequest) {
     let client = reqwest::Client::builder()
         .default_headers(default_headers())
         .timeout(Duration::from_secs(request.timeout.try_into().unwrap()))
@@ -103,7 +108,7 @@ async fn run_client(pool: &Pool<ConnectionManager>, request: &HealthRequest) {
             }
         }
         println!("time# {i} - {health} - {code} - {message}");
-        update_health(&pool, start_time.duration_since(UNIX_EPOCH).unwrap().as_millis() as i64, &request.uuid,response_time as i32, health, code as i16, &message).await;
+        update_health(&pool, &schema, start_time.duration_since(UNIX_EPOCH).unwrap().as_millis() as i64, &request.uuid,response_time as i32, health, code as i16, &message).await;
         sleep(duration).await;
     }
 }

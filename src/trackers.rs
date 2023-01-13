@@ -15,12 +15,12 @@ pub async fn connect(
     Ok(pool)
 }
 
-pub async fn requests(pool: &Pool<ConnectionManager>) -> Result<Vec<HealthRequest>, Box<dyn Error>> {
+pub async fn requests(pool: &Pool<ConnectionManager>, schema: &str) -> Result<Vec<HealthRequest>, Box<dyn Error>> {
     println!("Getting connection...from pool");
     let mut conn = pool.get().await.unwrap();
     println!("Got connection");
     let result: Vec<HealthRequest> = conn
-        .simple_query("select * from HealthTrackers where active=1")
+        .simple_query(format!("select * from {schema}.HealthTrackers where active=1"))
         .await?
         .into_first_result()
         .await?
@@ -49,6 +49,7 @@ pub async fn requests(pool: &Pool<ConnectionManager>) -> Result<Vec<HealthReques
 
 pub async fn update_health(
     pool: &Pool<ConnectionManager>,
+    schema: &str,
     time: i64,
     uuid: &Uuid,
     duration: i32,
@@ -64,7 +65,7 @@ pub async fn update_health(
     if let Ok(mut conn) = pool.get().await {
         let result = conn
             .execute(
-                "insert into HealthHistory values ((@P1), (@P2), (@P3), (@P4), (@P5), (@P6))",
+                format!("insert into {schema}.HealthHistory values ((@P1), (@P2), (@P3), (@P4), (@P5), (@P6))"),
                 &[uuid, &time, &duration, &health, &code, &first8000],
             )
             .await;
