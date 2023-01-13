@@ -51,6 +51,7 @@ pub async fn update_health(
     pool: &Pool<ConnectionManager>,
     time: i64,
     uuid: &Uuid,
+    duration: i32,
     health: bool,
     code: i16,
     message: &String,
@@ -63,8 +64,8 @@ pub async fn update_health(
     if let Ok(mut conn) = pool.get().await {
         let result = conn
             .execute(
-                "insert into HealthHistory values ((@P1), (@P2), (@P3), (@P4), (@P5))",
-                &[uuid, &time, &health, &code, &first8000],
+                "insert into HealthHistory values ((@P1), (@P2), (@P3), (@P4), (@P5), (@P6))",
+                &[uuid, &time, &duration, &health, &code, &first8000],
             )
             .await;
         println!("Updated HealthHistory: {:?}", result);

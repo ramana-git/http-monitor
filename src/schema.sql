@@ -15,6 +15,7 @@ drop table HealthHistory;
 create table HealthHistory(
 	tid uniqueidentifier not null references HealthTrackers(tid),
 	checktime datetime2 not null default current_timestamp,
+	duration int,
 	health bit not null,
 	code smallint,
 	logs varchar(8000) 

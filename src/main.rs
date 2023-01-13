@@ -73,24 +73,37 @@ async fn run_client(pool: &Pool<ConnectionManager>, request: &HealthRequest) {
 
     for i in 1.. {
         let builder = client.get(&request.url).headers(headers(&request.headers));
-        let response = builder.send().await.unwrap();
-        let status=response.status();
-        let headers = response.headers().clone();
-        let body = response.text().await.unwrap(); 
-        let mut health=false;
-        if status.is_success() {
-            health=validate(
-                &body,
-                &request.validation,
-                &request.criteria,
-                &request.condition,
-            );
+        let start_time = SystemTime::now();
+        let code;
+        let mut health = false;
+        let message;
+        let response_time;
+        match builder.send().await{
+            Ok(response) => {
+                response_time=start_time.elapsed().unwrap().as_millis();
+                let status=response.status();
+                let headers = response.headers().clone();
+                let body = response.text().await.unwrap(); 
+                if status.is_success() {
+                    health=validate(
+                        &body,
+                        &request.validation,
+                        &request.criteria,
+                        &request.condition,
+                    );
+                }
+                code=status.as_u16();
+                message=format!("{{ \"duration\"={response_time},\"headers\"={headers:#?},\"body\"={body} }}");
+            },
+            Err(e) => {
+                response_time=start_time.elapsed().unwrap().as_millis();
+                code=0;
+                health=false;
+                message=format!("{{ \"duration\"={response_time},\"error\"={} }}",e.to_string());
+            }
         }
-        let code=status.as_u16();
-        let time=SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
-        let message=format!("[{:#?},{body}]",headers);
-        println!("time# {i} - {health} - {status} - {:#?} - {:#?}", headers,body);
-        update_health(&pool, time as i64, &request.uuid, health, code as i16, &message).await;
+        println!("time# {i} - {health} - {code} - {message}");
+        update_health(&pool, start_time.duration_since(UNIX_EPOCH).unwrap().as_millis() as i64, &request.uuid,response_time as i32, health, code as i16, &message).await;
         sleep(duration).await;
     }
 }
