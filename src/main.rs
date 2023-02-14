@@ -98,13 +98,13 @@ async fn run_client(pool: &Pool<ConnectionManager>, schema: &str, request: &Heal
                     );
                 }
                 code=status.as_u16();
-                message=format!("{{ \"duration\"={response_time},\"headers\"={headers:#?},\"body\"={body} }}");
+                message=format!("{{\"duration\":{response_time},\"headers\":\"{headers:#?}\",\"body\":\"{body}\"}}");
             },
             Err(e) => {
                 response_time=start_time.elapsed().unwrap().as_millis();
                 code=0;
                 health=false;
-                message=format!("{{ \"duration\"={response_time},\"error\"={} }}",e.to_string());
+                message=format!("{{\"duration\":{response_time},\"error\":\"{}\"}}",e.to_string());
             }
         }
         println!("time# {i} - {health} - {code} - {message}");
