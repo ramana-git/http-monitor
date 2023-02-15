@@ -1,7 +1,7 @@
 use bb8::Pool;
 use bb8_tiberius::ConnectionManager;
-use tiberius::time::chrono::NaiveDateTime;
 use std::error::Error;
+use tiberius::time::chrono::NaiveDateTime;
 use uuid::Uuid;
 
 use crate::request::{HealthRequest, VType};
@@ -26,21 +26,21 @@ pub async fn requests(pool: &Pool<ConnectionManager>, schema: &str) -> Result<Ve
         .await?
         .into_iter()
         .map(|row| -> HealthRequest {
-            let headers = row.get::<&str, usize>(2).unwrap();
+            let headers = row.get::<&str, &str>("headers").unwrap();
             HealthRequest {
-                uuid: row.get::<Uuid, usize>(0).unwrap(),
-                url: row.get::<&str, usize>(1).unwrap().to_owned(),
+                uuid: row.get::<Uuid, &str>("tid").unwrap(),
+                url: row.get::<&str, &str>("url").unwrap().to_owned(),
                 headers: serde_json::from_str(headers).unwrap_or_default(),
-                interval: row.get::<i32, usize>(3).unwrap_or_default(),
-                timeout: row.get::<i32, usize>(4).unwrap_or_default(),
-                validation: match row.get::<&str, usize>(5) {
+                interval: row.get::<i32, &str>("interval").unwrap_or_default(),
+                timeout: row.get::<i32, &str>("timeout").unwrap_or_default(),
+                validation: match row.get::<&str, &str>("validation") {
                     Some("Json") => VType::Json,
                     Some("RegEx") => VType::RegEx,
                     Some("Text") => VType::Text,
                     _ => VType::None,
                 },
-                criteria: row.get::<&str, usize>(6).unwrap_or_default().to_owned(),
-                condition: row.get::<&str, usize>(7).unwrap_or_default().to_owned(),
+                criteria: row.get::<&str, &str>("criteria").unwrap_or_default().to_owned(),
+                condition: row.get::<&str, &str>("condition").unwrap_or_default().to_owned(),
             }
         })
         .collect();
@@ -57,10 +57,10 @@ pub async fn update_health(
     code: i16,
     message: &String,
 ) {
-    let time=NaiveDateTime::from_timestamp_millis(time).unwrap();
-    let mut first8000=message.as_str();
-    if message.len()>8000{
-        first8000=&message[0..8000];
+    let time = NaiveDateTime::from_timestamp_millis(time).unwrap();
+    let mut first8000 = message.as_str();
+    if message.len() > 8000 {
+        first8000 = &message[0..8000];
     }
     if let Ok(mut conn) = pool.get().await {
         let result = conn

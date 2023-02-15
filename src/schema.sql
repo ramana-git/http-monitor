@@ -1,6 +1,8 @@
 drop table HealthTrackers;
 create table HealthTrackers(
 	tid uniqueidentifier primary key default newid(),
+	appname varchar(32),
+	apiname varchar(32),
 	url varchar(2000) not null,
 	headers varchar(8000) not null default '{}',
 	interval int not null default 120,
@@ -21,8 +23,8 @@ create table HealthHistory(
 	logs varchar(8000) 
 );
 
-insert into HealthTrackers(url) values('https://httpbin.org/ip');
-insert into HealthTrackers(url) values('https://httpbin.org/get');
+insert into HealthTrackers(appname,apiname,url) values('HttpBin','IP','https://httpbin.org/ip');
+insert into HealthTrackers(appname,apiname,url) values('HttpBin','Get','https://httpbin.org/get');
 
 select * from HealthTrackers;
 select * from HealthHistory;

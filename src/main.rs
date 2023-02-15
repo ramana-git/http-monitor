@@ -83,32 +83,41 @@ async fn run_client(pool: &Pool<ConnectionManager>, schema: &str, request: &Heal
         let mut health = false;
         let message;
         let response_time;
-        match builder.send().await{
+        match builder.send().await {
             Ok(response) => {
-                response_time=start_time.elapsed().unwrap().as_millis();
-                let status=response.status();
+                response_time = start_time.elapsed().unwrap().as_millis();
+                let status = response.status();
                 let headers = response.headers().clone();
-                let body = response.text().await.unwrap(); 
+                let body = response.text().await.unwrap();
                 if status.is_success() {
-                    health=validate(
-                        &body,
-                        &request.validation,
-                        &request.criteria,
-                        &request.condition,
-                    );
+                    health = validate(&body, &request.validation, &request.criteria, &request.condition);
                 }
-                code=status.as_u16();
-                message=format!("{{\"duration\":{response_time},\"headers\":\"{headers:#?}\",\"body\":\"{body}\"}}");
-            },
+
+                let json_content: bool;
+                if let Some(content_type) = headers.get("content-type") {
+                    let content_type = content_type.to_str().unwrap();
+                    json_content = content_type.contains("json");
+                } else {
+                    json_content = false;
+                }
+                code = status.as_u16();
+                if json_content {
+                    message = format!(
+                        "{{\"duration\":{response_time},\"headers\":{headers:#?},\"body\":{body}}}"
+                    );
+                } else {
+                    message=format!("{{\"duration\":{response_time},\"headers\":{headers:#?},\"body\":\"{body}\"}}");
+                }
+            }
             Err(e) => {
-                response_time=start_time.elapsed().unwrap().as_millis();
-                code=0;
-                health=false;
-                message=format!("{{\"duration\":{response_time},\"error\":\"{}\"}}",e.to_string());
+                response_time = start_time.elapsed().unwrap().as_millis();
+                code = 0;
+                health = false;
+                message = format!("{{\"duration\":{response_time},\"error\":\"{}\"}}", e.to_string());
             }
         }
         println!("time# {i} - {health} - {code} - {message}");
-        update_health(&pool, &schema, start_time.duration_since(UNIX_EPOCH).unwrap().as_millis() as i64, &request.uuid,response_time as i32, health, code as i16, &message).await;
+        update_health(&pool, &schema, start_time.duration_since(UNIX_EPOCH).unwrap().as_millis() as i64, &request.uuid, response_time as i32, health, code as i16, &message).await;
         sleep(duration).await;
     }
 }

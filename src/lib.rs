@@ -8,7 +8,6 @@ pub mod trackers;
 pub fn headers(map: &HashMap<String, String>) -> HeaderMap {
     let mut headers = HeaderMap::new();
     for (key, value) in map.iter() {
-        println!("{key}:{value}");
         headers.insert(
             HeaderName::from_bytes(key.as_bytes()).unwrap(),
             HeaderValue::from_bytes(value.as_bytes()).unwrap(),
@@ -18,8 +17,8 @@ pub fn headers(map: &HashMap<String, String>) -> HeaderMap {
 }
 
 pub fn default_headers() -> HeaderMap {
-    let default_headers =
-        HashMap::from([("User-Agent".to_owned(), "Http-Monitor/0.1.0".to_owned())]);
+    let user_agent = env!("CARGO_PKG_NAME").to_owned() + "/" + env!("CARGO_PKG_VERSION");
+    let default_headers = HashMap::from([("User-Agent".to_owned(), user_agent)]);
     headers(&default_headers)
 }
 
